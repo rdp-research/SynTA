@@ -1,0 +1,102 @@
+@model IEnumerable<ProjectViewModel>
+@{
+    ViewData["Title"] = "My Projects";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-folder2-open me-2"></i>My Projects</h1>
+        <p class="page-subtitle mb-0">Organize and manage your test automation projects</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Project
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-folder-plus"></i>
+        </div>
+        <h3>No Projects Yet</h3>
+        <p>Get started by creating your first project to organize your test automation.</p>
+        <a asp-action="Create" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-lg me-2"></i>Create Your First Project
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var project in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-project h-100">
+                    <div class="card-header-project">
+                        <h5 class="mb-1 fw-semibold">
+                            <i class="bi bi-folder me-2"></i>@project.Name
+                        </h5>
+                        <small class="opacity-75">
+                            Created @project.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            @if (!string.IsNullOrEmpty(project.Description))
+                            {
+                                @(project.Description.Length > 100 ? project.Description.Substring(0, 100) + "..." : project.Description)
+                            }
+                            else
+                            {
+                                <em class="opacity-50">No description provided</em>
+                            }
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2">
+                                <i class="bi bi-file-text me-1"></i>@project.UserStoryCount
+                            </span>
+                            <span class="text-muted small">user @(project.UserStoryCount == 1 ? "story" : "stories")</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex gap-2">
+                            <a asp-area="User" asp-controller="UserStory" asp-action="Index" asp-route-projectId="@project.Id" 
+                               class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-arrow-right-circle me-1"></i> Open Project
+                            </a>
+                            <div class="btn-group">
+                                <a asp-action="Edit" asp-route-id="@project.Id" 
+                                   class="btn btn-outline-secondary" title="Edit Project">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@project.Id" 
+                                   class="btn btn-outline-danger" title="Delete Project">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

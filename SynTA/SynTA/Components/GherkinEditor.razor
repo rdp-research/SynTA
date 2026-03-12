@@ -1,0 +1,203 @@
+@using System.ComponentModel.DataAnnotations
+
+<h3>GherkinEditor</h3>
+
+<div class="gherkin-editor-container">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-file-earmark-text"></i> Gherkin Scenario Editor
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @ErrorMessage
+                    <button type="button" class="btn-close" @onclick="() => ErrorMessage = null"></button>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label for="scenarioTitle" class="form-label fw-bold">Scenario Title</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="scenarioTitle" 
+                       @bind="Title" 
+                       @bind:event="oninput"
+                       placeholder="Enter scenario title..." />
+            </div>
+
+            <div class="mb-3">
+                <label for="scenarioContent" class="form-label fw-bold">Gherkin Content</label>
+                <div class="editor-toolbar mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('Feature: ')">
+                        Feature
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('Scenario: ')">
+                        Scenario
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('Given ')">
+                        Given
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('When ')">
+                        When
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('Then ')">
+                        Then
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('And ')">
+                        And
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => InsertText('But ')">
+                        But
+                    </button>
+                </div>
+                <textarea class="form-control gherkin-textarea font-monospace" 
+                          id="scenarioContent" 
+                          rows="20" 
+                          @bind="Content" 
+                          @bind:event="oninput"
+                          placeholder="@GetPlaceholderText()"
+                          spellcheck="false"></textarea>
+                <small class="form-text text-muted">
+                    Edit the AI-generated Gherkin scenarios. Use proper Gherkin syntax: Feature, Scenario, Given, When, Then, And, But.
+                </small>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-info">Lines: @LineCount</span>
+                    <span class="badge bg-secondary ms-2">Characters: @CharCount</span>
+                </div>
+                <div>
+                    @if (OnCancel.HasDelegate)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                            Cancel
+                        </button>
+                    }
+                    @if (OnSave.HasDelegate)
+                    {
+                        <button type="button" class="btn btn-primary ms-2" @onclick="Save" disabled="@IsSaving">
+                            @if (IsSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-save"></i>
+                                <span>Save</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .gherkin-textarea {
+        background-color: #f8f9fa;
+        border: 2px solid #dee2e6;
+        line-height: 1.6;
+    }
+
+    .gherkin-textarea:focus {
+        background-color: #ffffff;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+
+    .editor-toolbar {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .gherkin-editor-container .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+[Parameter]
+public string Title { get; set; } = string.Empty;
+
+[Parameter]
+public string Content { get; set; } = string.Empty;
+
+[Parameter]
+public EventCallback<(string Title, string Content)> OnSave { get; set; }
+
+[Parameter]
+public EventCallback OnCancel { get; set; }
+
+private bool IsSaving { get; set; }
+private string? ErrorMessage { get; set; }
+
+private int LineCount => string.IsNullOrEmpty(Content) ? 0 : Content.Split('\n').Length;
+private int CharCount => Content?.Length ?? 0;
+
+private void InsertText(string text)
+{
+    Content += text;
+}
+
+private async Task Save()
+{
+    if (!ValidateContent())
+        return;
+
+        IsSaving = true;
+        try
+        {
+            await OnSave.InvokeAsync((Title, Content));
+            ErrorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error saving: {ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    private bool ValidateContent()
+    {
+        if (string.IsNullOrWhiteSpace(Title))
+        {
+            ErrorMessage = "Title is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Content))
+        {
+            ErrorMessage = "Content is required.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private string GetPlaceholderText()
+    {
+        return @"Feature: User Authentication
+
+Scenario: Successful login with valid credentials
+  Given I am on the login page
+  When I enter valid credentials
+  And I click the login button
+  Then I should be redirected to the dashboard
+  And I should see a welcome message";
+    }
+}

@@ -1,0 +1,145 @@
+@model IEnumerable<UserStoryDetailViewModel>
+@{
+    ViewData["Title"] = "User Stories";
+    var projectId = ViewBag.ProjectId;
+    var projectName = ViewBag.ProjectName;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@projectName</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-file-text me-2"></i>User Stories</h1>
+        <p class="page-subtitle mb-0">Project: <strong>@projectName</strong></p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" asp-route-projectId="@projectId" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New User Story
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-journal-plus"></i>
+        </div>
+        <h3>No User Stories Yet</h3>
+        <p>Create your first user story to start generating tests!</p>
+        <a asp-action="Create" asp-route-projectId="@projectId" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-lg me-2"></i>Create Your First User Story
+        </a>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 200px;">Title</th>
+                            <th style="min-width: 250px;">User Story</th>
+                            <th class="text-center" style="width: 100px;">Gherkin</th>
+                            <th class="text-center" style="width: 100px;">Cypress</th>
+                            <th style="width: 120px;">Created</th>
+                            <th style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var story in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@story.Id" class="fw-semibold text-decoration-none">
+                                        @story.Title
+                                    </a>
+                                </td>
+                                <td class="text-muted">
+                                    @if (story.UserStoryText.Length > 80)
+                                    {
+                                        @story.UserStoryText.Substring(0, 80)@:...
+                                    }
+                                    else
+                                    {
+                                        @story.UserStoryText
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (story.GherkinScenarioCount > 0)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check me-1"></i>@story.GherkinScenarioCount
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (story.CypressScriptCount > 0)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check me-1"></i>@story.CypressScriptCount
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">0</span>
+                                    }
+                                </td>
+                                <td class="text-muted small">
+                                    @story.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@story.Id" 
+                                           class="btn btn-primary btn-sm" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@story.Id" 
+                                           class="btn btn-outline-secondary btn-sm" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@story.Id" 
+                                           class="btn btn-outline-danger btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

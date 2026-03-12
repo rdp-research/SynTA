@@ -1,0 +1,162 @@
+@using System.Web
+@using Microsoft.JSInterop
+
+<div class="cypress-viewer-container">
+    <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-code-slash"></i> Cypress Test Script
+            </h5>
+            <span class="badge bg-light text-dark">@FileName</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="code-toolbar">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CopyToClipboard">
+                        <i class="bi bi-clipboard"></i> Copy to Clipboard
+                    </button>
+                    @if (OnDownload.HasDelegate)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="Download">
+                            <i class="bi bi-download"></i> Download
+                        </button>
+                    }
+                </div>
+                <div class="ms-auto">
+                    <span class="badge bg-secondary">Lines: @LineCount</span>
+                    <span class="badge bg-secondary ms-1">Characters: @CharCount</span>
+                </div>
+            </div>
+
+            <pre id="cypressCode" class="code-content m-0"><code class="@LanguageClass">@Content</code></pre>
+
+            @if (ShowCopySuccess)
+            {
+                <div class="alert alert-success alert-dismissible fade show m-2" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> Code copied to clipboard!
+                    <button type="button" class="btn-close" @onclick="() => ShowCopySuccess = false"></button>
+                </div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(TargetUrl))
+        {
+            <div class="card-footer text-muted">
+                <small>
+                    <i class="bi bi-link-45deg"></i> Target URL: <a href="@TargetUrl" target="_blank">@TargetUrl</a>
+                </small>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .cypress-viewer-container .code-content {
+        background-color: #282c34;
+        color: #abb2bf;
+        padding: 1.5rem;
+        overflow-x: auto;
+        max-height: 600px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0;
+    }
+
+    .cypress-viewer-container .code-toolbar {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cypress-viewer-container .card {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Syntax highlighting styles */
+    .language-typescript,
+    .language-javascript {
+        display: block;
+    }
+
+    .language-typescript .keyword,
+    .language-javascript .keyword {
+        color: #c678dd;
+    }
+
+    .language-typescript .string,
+    .language-javascript .string {
+        color: #98c379;
+    }
+
+    .language-typescript .comment,
+    .language-javascript .comment {
+        color: #5c6370;
+        font-style: italic;
+    }
+
+    .language-typescript .function,
+    .language-javascript .function {
+        color: #61afef;
+    }
+</style>
+
+@code {
+[Parameter]
+public string Content { get; set; } = string.Empty;
+
+[Parameter]
+public string FileName { get; set; } = "test.cy.ts";
+
+[Parameter]
+public string? TargetUrl { get; set; }
+
+[Parameter]
+public EventCallback OnDownload { get; set; }
+
+private bool ShowCopySuccess { get; set; }
+
+private int LineCount => string.IsNullOrEmpty(Content) ? 0 : Content.Split('\n').Length;
+private int CharCount => Content?.Length ?? 0;
+    
+/// <summary>
+/// Determines the syntax highlighting class based on file extension.
+/// </summary>
+private string LanguageClass => FileName.EndsWith(".cy.js", StringComparison.OrdinalIgnoreCase) 
+    ? "language-javascript" 
+    : "language-typescript";
+
+    [JSInvokable]
+    public async Task CopyToClipboard()
+    {
+        try
+        {
+            // Use JavaScript interop to copy to clipboard
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Content);
+            ShowCopySuccess = true;
+
+            // Hide success message after 3 seconds
+            await Task.Delay(3000);
+            ShowCopySuccess = false;
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            // Fallback: show alert
+            await JSRuntime.InvokeVoidAsync("alert", "Please manually copy the code");
+        }
+    }
+
+    private async Task Download()
+    {
+        if (OnDownload.HasDelegate)
+        {
+            await OnDownload.InvokeAsync();
+        }
+    }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+}

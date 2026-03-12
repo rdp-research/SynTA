@@ -1,0 +1,372 @@
+@model SettingsViewModel
+@using SynTA.Services.AI
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-gear me-2"></i>Settings</h1>
+        <p class="page-subtitle mb-0">Manage your preferences and application settings</p>
+    </div>
+    <div class="page-actions">
+        <a asp-area="User" asp-controller="Project" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-folder2-open me-1"></i> My Projects
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || !string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@(TempData["ErrorMessage"] ?? Model.ErrorMessage)
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card settings-card">
+    <div class="card-body p-4">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+            @{
+                var aiTabActive = Model.ActiveTab == "ai";
+                var generationTabActive = Model.ActiveTab == "generation";
+                var exportTabActive = Model.ActiveTab == "export";
+            }
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(aiTabActive ? "active" : "")" id="ai-tab" data-bs-toggle="tab" 
+                        data-bs-target="#ai" type="button" role="tab" aria-controls="ai" 
+                        aria-selected="@(aiTabActive ? "true" : "false")">
+                    <i class="bi bi-robot me-1"></i> AI Settings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(generationTabActive ? "active" : "")" id="generation-tab" data-bs-toggle="tab" 
+                        data-bs-target="#generation" type="button" role="tab" aria-controls="generation" 
+                        aria-selected="@(generationTabActive ? "true" : "false")">
+                    <i class="bi bi-lightning me-1"></i> Generation
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(exportTabActive ? "active" : "")" id="export-tab" data-bs-toggle="tab" 
+                        data-bs-target="#export" type="button" role="tab" aria-controls="export" 
+                        aria-selected="@(exportTabActive ? "true" : "false")">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+            </li>
+        </ul>
+        
+        <form asp-action="Update" method="post">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="ActiveTab" id="activeTabInput" value="@Model.ActiveTab" />
+            
+            <div class="tab-content" id="settingsTabContent">
+                <!-- AI Settings Tab -->
+                <div class="tab-pane fade @(Model.ActiveTab == "ai" ? "show active" : "")" id="ai" role="tabpanel" aria-labelledby="ai-tab">
+                    <h5 class="mb-4 text-primary"><i class="bi bi-cpu me-2"></i>AI Provider Configuration</h5>
+                    
+                    <div class="mb-4">
+                        <label asp-for="PreferredAIProvider" class="form-label">
+                            Preferred AI Provider
+                        </label>
+                        <select asp-for="PreferredAIProvider" class="form-select" id="preferredProviderSelect">
+                            <option value="OpenAI">ChatGPT</option>
+                            <option value="Gemini">Gemini</option>
+                            <option value="OpenRouter">OpenRouter</option>
+                        </select>
+                        <div class="form-text">
+                            Choose your preferred AI provider for generating Gherkin scenarios and Cypress scripts.
+                        </div>
+                        @if (!Model.AvailableProviders.Any())
+                        {
+                            <div class="alert alert-warning mt-2 mb-0">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                No AI providers are currently configured. Please contact your administrator.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Available:</strong> @string.Join(", ", Model.AvailableProviders.Select(p => p.ToString()))
+                                </small>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-4" id="modelTierContainer" style="display: @(Model.PreferredAIProvider == AIProviderType.OpenRouter ? "none" : "block")">
+                        <label asp-for="PreferredModelTier" class="form-label">
+                            Model Performance Tier
+                        </label>
+                        <select asp-for="PreferredModelTier" class="form-select" id="preferredModelTierSelect">
+                            <option value="UltraFast">⚡ Ultra Fast - Fastest, cheapest, basic intelligence</option>
+                            <option value="Fast">🚀 Fast - Good balance of speed and intelligence</option>
+                            <option value="Smart">🧠 Smart - Most intelligent, slower, more expensive</option>
+                        </select>
+                        <div class="form-text">
+                            Choose between speed/cost and intelligence. Ultra Fast is best for simple tasks, Smart is best for complex scenarios.
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="openRouterModelContainer" style="display: @(Model.PreferredAIProvider == AIProviderType.OpenRouter ? "block" : "none")">
+                        <label asp-for="OpenRouterModelName" class="form-label">
+                            OpenRouter Model
+                        </label>
+                        <input asp-for="OpenRouterModelName" class="form-control" placeholder="e.g. openai/gpt-5-mini" />
+                        <span asp-validation-for="OpenRouterModelName" class="text-danger small"></span>
+                        <div class="form-text">
+                            Paste a model ID from OpenRouter models. This replaces the speed tier selection for OpenRouter.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PreferredLanguage" class="form-label">
+                            Preferred Language
+                        </label>
+                        <select asp-for="PreferredLanguage" class="form-select">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                        </select>
+                        <div class="form-text">
+                            Language used for AI-generated test scenarios and scripts.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Settings Tab -->
+                <div class="tab-pane fade @(Model.ActiveTab == "generation" ? "show active" : "")" id="generation" role="tabpanel" aria-labelledby="generation-tab">
+                    <h5 class="mb-4 text-primary"><i class="bi bi-sliders me-2"></i>Generation Preferences</h5>
+                    
+                    <div class="mb-4">
+                        <label asp-for="MaxScenariosPerGeneration" class="form-label">
+                            Maximum Scenarios per Generation
+                        </label>
+                        <input type="number" asp-for="MaxScenariosPerGeneration" class="form-control" min="0" max="50" />
+                        <span asp-validation-for="MaxScenariosPerGeneration" class="text-danger small"></span>
+                        <div class="form-text">
+                            Limit scenarios generated per user story (0-50). Set to <strong>0</strong> for automatic optimization.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PreferredCypressLanguage" class="form-label">
+                            Cypress Script Language
+                        </label>
+                        <select asp-for="PreferredCypressLanguage" class="form-select">
+                            <option value="TypeScript">TypeScript (.cy.ts) - Modern, type-safe scripts</option>
+                            <option value="JavaScript">JavaScript (.cy.js) - Classic scripts</option>
+                        </select>
+                        <div class="form-text">
+                            TypeScript provides type safety and better IDE support, while JavaScript offers broader compatibility.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="VisionApiEnabled" class="form-check-input" type="checkbox" role="switch" id="visionApiToggle">
+                            <label asp-for="VisionApiEnabled" class="form-check-label" for="visionApiToggle">
+                                <i class="bi bi-eye me-1"></i> Enable Vision API (Screenshots)
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            When enabled, screenshots of the target URL will be captured and sent to the AI for multimodal processing.
+                            This can improve selector accuracy but uses more tokens. Disable to reduce costs and improve generation speed.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="WebExtractionEnabledForCypressGeneration" class="form-check-input" type="checkbox" role="switch" id="webExtractionToggle">
+                            <label asp-for="WebExtractionEnabledForCypressGeneration" class="form-check-label" for="webExtractionToggle">
+                                <i class="bi bi-globe2 me-1"></i> Enable Web Extraction for Cypress Generation
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            Master switch for website context extraction. Disable to generate scripts using Gherkin + user story context only.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IncludeWebPageMetadataInExtraction" class="form-check-input" type="checkbox" role="switch" id="metadataToggle">
+                            <label asp-for="IncludeWebPageMetadataInExtraction" class="form-check-label" for="metadataToggle">
+                                <i class="bi bi-card-text me-1"></i> Include Website Metadata
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            Includes page title, H1, meta description, and language in the generation context.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IncludeUiElementMapInExtraction" class="form-check-input" type="checkbox" role="switch" id="uiMapToggle">
+                            <label asp-for="IncludeUiElementMapInExtraction" class="form-check-label" for="uiMapToggle">
+                                <i class="bi bi-diagram-3 me-1"></i> Include UI Element Map
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            Includes the structured selector mapping for interactive elements to improve targeting reliability.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IncludeAccessibilityTreeInExtraction" class="form-check-input" type="checkbox" role="switch" id="a11yToggle">
+                            <label asp-for="IncludeAccessibilityTreeInExtraction" class="form-check-label" for="a11yToggle">
+                                <i class="bi bi-universal-access me-1"></i> Include Accessibility Tree
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            Includes accessibility structure to improve semantic understanding of the page.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="IncludeSimplifiedHtmlInExtraction" class="form-check-input" type="checkbox" role="switch" id="htmlToggle">
+                            <label asp-for="IncludeSimplifiedHtmlInExtraction" class="form-check-label" for="htmlToggle">
+                                <i class="bi bi-code-slash me-1"></i> Include Simplified HTML
+                            </label>
+                        </div>
+                        <div class="form-text ms-4">
+                            Includes cleaned HTML blocks in context. Disable to reduce prompt size and rely on other extraction inputs.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Settings Tab -->
+                <div class="tab-pane fade @(Model.ActiveTab == "export" ? "show active" : "")" id="export" role="tabpanel" aria-labelledby="export-tab">
+                    <h5 class="mb-4 text-primary"><i class="bi bi-file-earmark-arrow-down me-2"></i>Export Preferences</h5>
+                    
+                    <div class="mb-4">
+                        <label asp-for="DefaultCypressFileNamePattern" class="form-label">
+                            Cypress File Name Pattern
+                        </label>
+                        <input asp-for="DefaultCypressFileNamePattern" class="form-control" />
+                        <span asp-validation-for="DefaultCypressFileNamePattern" class="text-danger small"></span>
+                        <div class="form-text">
+                            Use placeholders: <code>{UserStory}</code>, <code>{Date}</code>, <code>{DateTime}</code>, <code>{Project}</code>
+                        </div>
+                    </div>
+
+                    <div class="card" style="background: var(--primary-50); border: 1px solid var(--primary-100);">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary"><i class="bi bi-info-circle me-1"></i> File Name Examples</h6>
+                            <p class="small text-muted mb-2">Extension is automatically applied based on language setting.</p>
+                            <ul class="mb-0 small">
+                                <li><code>{UserStory}</code> → <code>login-functionality.cy.ts</code></li>
+                                <li><code>{Project}/{UserStory}</code> → <code>MyApp/login-functionality.cy.ts</code></li>
+                                <li><code>{UserStory}-{Date}</code> → <code>login-functionality-2024-01-15.cy.ts</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetModal">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset to Defaults
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Save Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetModalLabel">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>Reset Settings
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to reset all settings to their default values? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Reset" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Update hidden field when tab changes
+        document.querySelectorAll('#settingsTabs button').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (event) {
+                const tabId = event.target.getAttribute('data-bs-target').replace('#', '');
+                document.getElementById('activeTabInput').value = tabId;
+            });
+        });
+
+        const webExtractionToggle = document.getElementById('webExtractionToggle');
+        const extractionChildren = [
+            document.getElementById('metadataToggle'),
+            document.getElementById('uiMapToggle'),
+            document.getElementById('a11yToggle'),
+            document.getElementById('htmlToggle')
+        ];
+
+        const syncExtractionToggleState = () => {
+            const enabled = webExtractionToggle?.checked ?? true;
+            extractionChildren.forEach(toggle => {
+                if (!toggle) return;
+                toggle.disabled = !enabled;
+            });
+        };
+
+        if (webExtractionToggle) {
+            webExtractionToggle.addEventListener('change', syncExtractionToggleState);
+            syncExtractionToggleState();
+        }
+
+        const preferredProviderSelect = document.getElementById('preferredProviderSelect');
+        const modelTierContainer = document.getElementById('modelTierContainer');
+        const openRouterModelContainer = document.getElementById('openRouterModelContainer');
+
+        const syncProviderSpecificFields = () => {
+            const isOpenRouter = preferredProviderSelect?.value === 'OpenRouter';
+
+            if (modelTierContainer) {
+                modelTierContainer.style.display = isOpenRouter ? 'none' : 'block';
+            }
+
+            if (openRouterModelContainer) {
+                openRouterModelContainer.style.display = isOpenRouter ? 'block' : 'none';
+            }
+        };
+
+        if (preferredProviderSelect) {
+            preferredProviderSelect.addEventListener('change', syncProviderSpecificFields);
+            syncProviderSpecificFields();
+        }
+    </script>
+}

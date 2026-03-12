@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SynTA.AppHost/SynTA.AppHost.csproj" />
+  <Project Path="SynTA.ServiceDefaults/SynTA.ServiceDefaults.csproj" />
+  <Project Path="SynTA.Tests/SynTA.Tests.csproj" />
+  <Project Path="SynTA/SynTA.csproj" />
+</Solution>

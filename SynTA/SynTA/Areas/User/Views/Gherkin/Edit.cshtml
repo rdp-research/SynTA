@@ -1,0 +1,171 @@
+@model GherkinEditorViewModel
+@{
+    ViewData["Title"] = "Edit Gherkin Scenario";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="UserStory" asp-action="Details" asp-route-id="@Model.UserStoryId">@Model.UserStoryTitle</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Edit Gherkin Scenario</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-pencil-square me-2"></i>Edit Gherkin Scenario</h1>
+        <p class="page-subtitle mb-0">Modify the AI-generated Gherkin scenario</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body d-flex gap-4">
+        <div>
+            <small class="text-muted text-uppercase fw-semibold">User Story</small>
+            <p class="mb-0 fw-semibold">@Model.UserStoryTitle</p>
+        </div>
+        <div>
+            <small class="text-muted text-uppercase fw-semibold">Project</small>
+            <p class="mb-0">@Model.ProjectName</p>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="editForm">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="UserStoryId" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <label asp-for="Title" class="form-label">
+                    <i class="bi bi-type me-1"></i> Scenario Title
+                </label>
+                <input asp-for="Title" class="form-control form-control-lg" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Content" class="form-label">
+                    <i class="bi bi-code-square me-1"></i> Gherkin Content
+                </label>
+                <div class="editor-toolbar mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('Feature: ')">
+                        Feature
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('Scenario: ')">
+                        Scenario
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('Given ')">
+                        Given
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('When ')">
+                        When
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('Then ')">
+                        Then
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('And ')">
+                        And
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertGherkinKeyword('But ')">
+                        But
+                    </button>
+                </div>
+                <textarea asp-for="Content" 
+                          class="form-control font-monospace gherkin-textarea" 
+                          rows="20" 
+                          id="gherkinContent"
+                          spellcheck="false"></textarea>
+                <span asp-validation-for="Content" class="text-danger small"></span>
+                <div class="form-text">
+                    Use proper Gherkin syntax: Feature, Scenario, Given, When, Then, And, But.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a asp-area="User" asp-controller="Gherkin" asp-action="Index" asp-route-userStoryId="@Model.UserStoryId" 
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+        </button>
+    </div>
+</form>
+
+<style>
+    .gherkin-textarea {
+        background-color: var(--surface-secondary);
+        border: 2px solid var(--border-color);
+        line-height: 1.6;
+    }
+
+    .gherkin-textarea:focus {
+        background-color: var(--surface-primary);
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+    }
+
+    .editor-toolbar {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function insertGherkinKeyword(keyword) {
+            const textarea = document.getElementById('gherkinContent');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const before = text.substring(0, start);
+            const after = text.substring(end, text.length);
+            textarea.value = before + keyword + after;
+            textarea.selectionStart = textarea.selectionEnd = start + keyword.length;
+            textarea.focus();
+        }
+
+        async function saveAndApprove() {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok || response.redirected) {
+                    // Then submit the approve form
+                    document.getElementById('approveForm').submit();
+                } else {
+                    alert('Error saving changes. Please try again.');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Error saving changes. Please try again.');
+            }
+        }
+    </script>
+}

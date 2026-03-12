@@ -1,0 +1,48 @@
+@using Microsoft.AspNetCore.Identity
+@using SynTA.Models.Domain
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<ul class="navbar-nav align-items-center">
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i> @User.Identity?.Name
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" asp-area="User" asp-controller="Project" asp-action="Index">
+                    <i class="bi bi-folder2-open me-2"></i>My Projects
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-area="User" asp-controller="Settings" asp-action="Index">
+                    <i class="bi bi-gear me-2"></i>Settings
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="dropdown-item">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-controller="Account" asp-action="Login">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+        </a>
+    </li>
+    <li class="nav-item ms-2">
+        <a class="btn btn-nav btn-sm" asp-controller="Account" asp-action="Register">
+            <i class="bi bi-person-plus me-1"></i> Sign Up
+        </a>
+    </li>
+}
+</ul>

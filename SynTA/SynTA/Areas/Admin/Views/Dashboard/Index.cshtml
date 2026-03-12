@@ -1,0 +1,191 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-shield-check me-2"></i>Admin Dashboard</h1>
+        <p class="page-subtitle mb-0">Overview of SynTA application usage and statistics</p>
+    </div>
+    <div class="page-actions">
+        <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="btn btn-primary">
+            <i class="bi bi-people me-1"></i> Manage Users
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Stats Grid -->
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-primary h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-primary-light">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3 class="stat-value">@Model.TotalUsers</h3>
+                <p class="stat-label mb-0">Total Users</p>
+                <small class="text-success"><i class="bi bi-arrow-up"></i> +@Model.NewUsersThisMonth this month</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-info h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-info-light">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h3 class="stat-value">@Model.TotalProjects</h3>
+                <p class="stat-label mb-0">Projects</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-warning h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-warning-light">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <h3 class="stat-value">@Model.TotalUserStories</h3>
+                <p class="stat-label mb-0">User Stories</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-success h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-success-light">
+                    <i class="bi bi-file-earmark-code"></i>
+                </div>
+                <h3 class="stat-value">@Model.TotalGherkinScenarios</h3>
+                <p class="stat-label mb-0">Gherkin Scenarios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-danger h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-danger-light">
+                    <i class="bi bi-terminal"></i>
+                </div>
+                <h3 class="stat-value">@Model.TotalCypressScripts</h3>
+                <p class="stat-label mb-0">Cypress Scripts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card card-stat stat-primary h-100">
+            <div class="card-body py-4">
+                <div class="stat-card-icon bg-primary-light">
+                    <i class="bi bi-activity"></i>
+                </div>
+                <h3 class="stat-value">@Model.ActiveUsersThisMonth</h3>
+                <p class="stat-label mb-0">Active This Month</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2 text-primary"></i>Top Users by Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.TopUsers.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th class="text-center">Projects</th>
+                                    <th class="text-center">Stories</th>
+                                    <th class="text-center">Tests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.TopUsers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Users" asp-action="Details" asp-route-id="@user.UserId" class="text-decoration-none fw-semibold">
+                                                @user.Email
+                                            </a>
+                                        </td>
+                                        <td class="text-center">@user.ProjectCount</td>
+                                        <td class="text-center">@user.UserStoryCount</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">@user.TestCount</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                        <p class="mb-0">No user activity yet</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentActivities.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var activity in Model.RecentActivities)
+                        {
+                            <div class="list-group-item px-0 border-0 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <p class="mb-1">
+                                            <strong class="text-primary">@activity.UserEmail</strong>
+                                        </p>
+                                        <p class="mb-1 text-muted small">@activity.Description</p>
+                                        <span class="badge bg-secondary">@activity.ActivityType</span>
+                                    </div>
+                                    <small class="text-muted text-nowrap">@activity.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-clock fs-1 d-block mb-2 opacity-50"></i>
+                        <p class="mb-0">No recent activity</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

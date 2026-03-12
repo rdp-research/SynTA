@@ -1,0 +1,8 @@
+﻿/* Scoped Layout Styles - Core Bootstrap overrides moved to site.css */
+
+/* Any layout-specific styles can go here */
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}

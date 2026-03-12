@@ -1,0 +1,371 @@
+@model UserStoryDetailViewModel
+@{
+    ViewData["Title"] = "User Story Details";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="UserStory" asp-action="Index" asp-route-projectId="@Model.ProjectId">@Model.ProjectName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-journal-text me-2"></i>@Model.Title</h1>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-chat-left-quote me-2 text-primary"></i>User Story</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text mb-0" style="white-space: pre-wrap;">@Model.UserStoryText</p>
+            </div>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-text-paragraph me-2 text-primary"></i>Description</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-0" style="white-space: pre-wrap;">@Model.Description</p>
+                </div>
+            </div>
+        }
+        
+        @if (!string.IsNullOrEmpty(Model.AcceptanceCriteria))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list-check me-2 text-primary"></i>Acceptance Criteria</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-0" style="white-space: pre-wrap;">@Model.AcceptanceCriteria</p>
+                </div>
+            </div>
+        }
+
+        <!-- Stats Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card card-stat stat-success h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="stat-card-icon bg-success-light mx-auto">
+                            <i class="bi bi-file-earmark-code"></i>
+                        </div>
+                        <h2 class="stat-value">@Model.GherkinScenarioCount</h2>
+                        <p class="stat-label mb-3">Gherkin Scenarios</p>
+                        @if (Model.GherkinScenarioCount > 0)
+                        {
+                            <a asp-area="User" asp-controller="Gherkin" asp-action="Index" asp-route-userStoryId="@Model.Id" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i> View Scenarios
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="User" asp-controller="Gherkin" asp-action="Generate" asp-route-userStoryId="@Model.Id" 
+                               class="btn btn-success btn-sm">
+                                <i class="bi bi-magic me-1"></i> Generate Scenarios
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-stat stat-info h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="stat-card-icon bg-info-light mx-auto">
+                            <i class="bi bi-terminal"></i>
+                        </div>
+                        <h2 class="stat-value">@Model.CypressScriptCount</h2>
+                        <p class="stat-label mb-3">Cypress Scripts</p>
+                        @if (Model.CypressScriptCount > 0)
+                        {
+                            <a asp-area="User" asp-controller="Cypress" asp-action="Index" asp-route-userStoryId="@Model.Id" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i> View Scripts
+                            </a>
+                        }
+                        else if (Model.GherkinScenarioCount > 0)
+                        {
+                            <a asp-area="User" asp-controller="Gherkin" asp-action="Index" asp-route-userStoryId="@Model.Id" 
+                               class="btn btn-info btn-sm">
+                                <i class="bi bi-code-slash me-1"></i> Generate Scripts
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="bi bi-hourglass me-1"></i> Generate Gherkin First
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Generate - Most Important Action -->
+        <div class="card card-generate mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge-fill me-2"></i>Quick Generate</h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Generate Gherkin scenarios and Cypress scripts in one click.</p>
+                <form id="generateAllForm" asp-action="GenerateAll" asp-route-id="@Model.Id" method="post">
+                    <div class="mb-3">
+                        <label for="targetUrl" class="form-label small">
+                            <i class="bi bi-link-45deg me-1"></i> Target URL
+                        </label>
+                        <input type="url" class="form-control form-control-sm" id="targetUrl" name="targetUrl" 
+                               placeholder="https://example.com" />
+                        <div class="form-text small">Optional: Enables HTML context fetching.</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" id="generateAllBtn" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-1"></i>Generate All
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted text-uppercase fw-semibold">Project</small>
+                    <p class="mb-0">@Model.ProjectName</p>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted text-uppercase fw-semibold">Created</small>
+                    <p class="mb-0">@Model.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                </div>
+                
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase fw-semibold">Last Updated</small>
+                        <p class="mb-0">@Model.UpdatedAt.Value.ToString("MMMM dd, yyyy")</p>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- Actions Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear me-2 text-secondary"></i>Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i> Edit User Story
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="btn btn-secondary btn-sm w-100">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Stories
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none loading-overlay" 
+     style="z-index: 9999;">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-white">
+        <div class="loading-card p-4" style="max-width: 420px; width: 90%;">
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <i class="bi bi-lightning-charge-fill fs-1" style="color: #fbbf24;" id="mainIcon"></i>
+                </div>
+                <h4 class="mb-1 fw-bold">Generate All</h4>
+                <small class="text-white-50">Creating complete test suite</small>
+            </div>
+            
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" style="background: rgba(255,255,255,0.1);">
+                    <i class="bi bi-clock text-info"></i>
+                    <span class="font-monospace fs-4 fw-bold" id="elapsedTime">00:00</span>
+                </div>
+                <div class="mt-2">
+                    <small class="text-white-50">Typical: 30-60 seconds</small>
+                </div>
+            </div>
+            
+            <div class="current-phase text-center mb-4 p-3 rounded-3" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3);">
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <i class="bi bi-arrow-repeat spin-icon text-info"></i>
+                    <span class="text-info fw-bold" id="currentPhase">Phase 1 of 3</span>
+                </div>
+                <div id="loadingStep" class="small">Generating Gherkin scenarios...</div>
+            </div>
+            
+            <div class="pipeline-steps">
+                <div class="step-row d-flex align-items-center mb-2 p-2 rounded active-step" id="pipeline1">
+                    <i class="bi bi-arrow-repeat spin-icon text-info me-2" id="p1Icon"></i>
+                    <span class="small flex-grow-1">AI: Gherkin scenarios</span>
+                    <span class="badge bg-info" id="p1Badge">Working</span>
+                </div>
+                
+                <div class="step-row d-flex align-items-center mb-2 p-2 rounded opacity-50" id="pipeline2">
+                    <i class="bi bi-circle text-muted me-2" id="p2Icon"></i>
+                    <span class="small flex-grow-1" id="p2Text">Fetch HTML</span>
+                    <span class="badge bg-secondary" id="p2Badge">Waiting</span>
+                </div>
+                
+                <div class="step-row d-flex align-items-center mb-2 p-2 rounded opacity-50" id="pipeline3">
+                    <i class="bi bi-circle text-muted me-2" id="p3Icon"></i>
+                    <span class="small flex-grow-1">AI: Cypress script</span>
+                    <span class="badge bg-secondary" id="p3Badge">Waiting</span>
+                </div>
+                
+                <div class="step-row d-flex align-items-center p-2 rounded opacity-50" id="pipeline4">
+                    <i class="bi bi-circle text-muted me-2" id="p4Icon"></i>
+                    <span class="small flex-grow-1">Save to database</span>
+                    <span class="badge bg-secondary" id="p4Badge">Waiting</span>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4 pt-3 border-top border-secondary">
+                <small class="text-white-50">
+                    <i class="bi bi-info-circle me-1"></i>
+                    2 AI calls required
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .spin-icon {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    
+    @@keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.getElementById('generateAllForm').addEventListener('submit', function(e) {
+            const overlay = document.getElementById('loadingOverlay');
+            const btn = document.getElementById('generateAllBtn');
+            const step = document.getElementById('loadingStep');
+            const currentPhase = document.getElementById('currentPhase');
+            const elapsedTimeEl = document.getElementById('elapsedTime');
+            const targetUrlInput = document.getElementById('targetUrl');
+            
+            overlay.classList.remove('d-none');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+            
+            const hasTargetUrl = targetUrlInput?.value?.trim().length > 0;
+            let startTime = Date.now();
+            
+            // Update pipeline step 2 based on whether URL is provided
+            if (!hasTargetUrl) {
+                document.getElementById('p2Text').textContent = 'HTML fetch (skipped)';
+            }
+            
+            // Timer
+            setInterval(function() {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elapsedTimeEl.textContent = mins + ':' + secs;
+                
+                // Phase 1: Gherkin AI call
+                if (elapsed >= 0 && elapsed < 20) {
+                    currentPhase.textContent = 'Phase 1 of 3';
+                    step.textContent = 'Generating Gherkin scenarios...';
+                }
+                // Phase 2: HTML fetch
+                else if (elapsed >= 20 && elapsed < 28) {
+                    completeStep(1);
+                    if (hasTargetUrl) {
+                        activateStep(2);
+                        currentPhase.textContent = 'Phase 2 of 3';
+                        step.textContent = 'Fetching HTML...';
+                    } else {
+                        skipStep(2);
+                        activateStep(3);
+                        currentPhase.textContent = 'Phase 2 of 3';
+                        step.textContent = 'Generating Cypress script...';
+                    }
+                }
+                // Phase 3: Cypress AI call
+                else if (elapsed >= 28 && elapsed < 55) {
+                    completeStep(2, !hasTargetUrl);
+                    activateStep(3);
+                    currentPhase.textContent = 'Phase 3 of 3';
+                    step.textContent = 'Generating Cypress script...';
+                }
+                // Final: Saving
+                else if (elapsed >= 55) {
+                    completeStep(3);
+                    activateStep(4);
+                    currentPhase.textContent = 'Finishing';
+                    step.textContent = 'Saving to database...';
+                }
+            }, 1000);
+            
+            function activateStep(num) {
+                const el = document.getElementById('pipeline' + num);
+                if (el && !el.classList.contains('completed-step')) {
+                    el.classList.remove('opacity-50');
+                    el.classList.add('active-step');
+                    document.getElementById('p' + num + 'Icon').className = 'bi bi-arrow-repeat spin-icon text-info me-2';
+                    document.getElementById('p' + num + 'Badge').className = 'badge bg-info';
+                    document.getElementById('p' + num + 'Badge').textContent = 'Working';
+                }
+            }
+            
+            function completeStep(num, skipped = false) {
+                const el = document.getElementById('pipeline' + num);
+                if (el && !el.classList.contains('completed-step')) {
+                    el.classList.remove('active-step', 'opacity-50');
+                    el.classList.add(skipped ? 'skipped-step' : 'completed-step');
+                    document.getElementById('p' + num + 'Icon').className = skipped 
+                        ? 'bi bi-dash-circle text-muted me-2' 
+                        : 'bi bi-check-circle-fill text-success me-2';
+                    document.getElementById('p' + num + 'Badge').className = skipped 
+                        ? 'badge bg-secondary' 
+                        : 'badge bg-success';
+                    document.getElementById('p' + num + 'Badge').textContent = skipped ? 'Skipped' : 'Done';
+                }
+            }
+            
+            function skipStep(num) {
+                completeStep(num, true);
+            }
+        });
+    </script>
+}

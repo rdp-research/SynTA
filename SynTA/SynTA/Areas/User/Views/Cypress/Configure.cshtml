@@ -1,0 +1,347 @@
+@model CypressConfigureViewModel
+@{
+    ViewData["Title"] = "Configure Cypress Generation";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="UserStory" asp-action="Details" asp-route-id="@Model.UserStoryId">@Model.UserStoryTitle</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Configure Cypress</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-gear me-2"></i>Configure Cypress Generation</h1>
+                <p class="page-subtitle mb-0">Set up your Cypress script generation parameters</p>
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle me-2"></i>@TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-code me-2 text-success"></i>Gherkin Scenario</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-semibold">@Model.GherkinTitle</h6>
+                <pre class="gherkin-content font-monospace mt-3" style="white-space: pre-wrap; background-color: var(--surface-secondary); padding: 1rem; border-radius: var(--radius-lg); max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color);">@Model.GherkinContent</pre>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Target Configuration</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Generate" method="post" id="generateForm">
+                    <input type="hidden" asp-for="GherkinScenarioId" />
+                    <input type="hidden" asp-for="GherkinTitle" />
+                    <input type="hidden" asp-for="GherkinContent" />
+                    <input type="hidden" asp-for="UserStoryId" />
+                    <input type="hidden" asp-for="UserStoryTitle" />
+                    <input type="hidden" asp-for="ProjectName" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="TargetUrl" class="form-label">
+                            <i class="bi bi-link-45deg me-1"></i> Target URL
+                        </label>
+                        <input asp-for="TargetUrl" class="form-control form-control-lg" 
+                               placeholder="https://example.com/login" 
+                               required />
+                        <span asp-validation-for="TargetUrl" class="text-danger small"></span>
+                        <div class="form-text">
+                            Enter the URL of the web page you want to test. This helps the AI generate accurate test selectors.
+                        </div>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input asp-for="FetchHtmlContext" class="form-check-input" />
+                        <label asp-for="FetchHtmlContext" class="form-check-label">
+                            Fetch HTML from target URL to improve selector accuracy
+                        </label>
+                        <div class="form-text">
+                            Recommended: The AI will analyze the actual HTML structure to generate more accurate selectors.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-4" role="alert">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>What happens next?</h6>
+                        <ol class="mb-2 ps-3">
+                            <li class="mb-1">The AI will analyze your Gherkin scenarios</li>
+                            <li class="mb-1">If enabled, HTML will be fetched from the target URL</li>
+                            <li class="mb-1">A complete Cypress test script will be generated</li>
+                            <li>You can review, edit, and download the script</li>
+                        </ol>
+                        <p class="mb-0"><strong><i class="bi bi-clock me-1"></i>Estimated time:</strong> 15-45 seconds</p>
+                    </div>
+
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a asp-area="User" asp-controller="Gherkin" asp-action="Index" asp-route-userStoryId="@Model.UserStoryId" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg" id="generateBtn">
+                            <i class="bi bi-terminal me-1"></i> Generate Cypress Script
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2 text-warning"></i>Tips for Best Results</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li class="mb-2">Ensure the target URL is accessible and doesn't require authentication</li>
+                    <li class="mb-2">Use stable, semantic HTML elements with proper IDs or data-testid attributes</li>
+                    <li class="mb-2">The generated script may need minor adjustments for your specific setup</li>
+                    <li>Review the generated selectors and update them if your HTML structure changes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                <div class="w-100 text-center text-white py-3">
+                    <div class="mb-2">
+                        <i class="bi bi-terminal fs-2 pulse-icon"></i>
+                    </div>
+                    <h5 class="modal-title mb-1" id="progressModalLabel">Generating Cypress Script</h5>
+                    <small class="opacity-75">Converting Gherkin to TypeScript</small>
+                </div>
+            </div>
+            
+            <div class="modal-body p-4">
+                <!-- Timer -->
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center gap-3 px-4 py-2 rounded-pill" style="background: #f0fdf4;">
+                        <i class="bi bi-clock text-success"></i>
+                        <span class="font-monospace fs-5 fw-bold text-success" id="elapsedTime">00:00</span>
+                        <span class="text-muted small">/ ~30s typical</span>
+                    </div>
+                </div>
+                
+                <!-- Pipeline Steps -->
+                <div class="pipeline-steps">
+                    <div class="step-item d-flex align-items-center mb-2 p-2 rounded completed-step" id="step1">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">Gherkin loaded</div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success">Done</span>
+                    </div>
+                    
+                    <div class="step-item d-flex align-items-center mb-2 p-2 rounded" id="step2">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-arrow-repeat text-primary spin-icon" id="step2Icon"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small" id="step2Title">Fetching HTML</div>
+                            <div class="text-muted smaller" id="step2Desc">Downloading page structure...</div>
+                        </div>
+                        <span class="badge bg-primary" id="step2Badge">Working</span>
+                    </div>
+                    
+                    <div class="step-item d-flex align-items-center mb-2 p-2 rounded opacity-50" id="step3">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-circle text-muted" id="step3Icon"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">AI generating code</div>
+                            <div class="text-muted smaller" id="step3Desc">Waiting...</div>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-secondary" id="step3Badge">Waiting</span>
+                    </div>
+                    
+                    <div class="step-item d-flex align-items-center p-2 rounded opacity-50" id="step4">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-circle text-muted" id="step4Icon"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">Save script</div>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-secondary" id="step4Badge">Waiting</span>
+                    </div>
+                </div>
+                
+                <!-- Code preview mini -->
+                <div class="mt-3 p-2 rounded font-monospace" style="background: #1e293b; font-size: 0.7rem;">
+                    <span style="color: #c084fc;">describe</span><span style="color: #e2e8f0;">(</span><span style="color: #fbbf24;" id="codePreview">'test'</span><span style="color: #e2e8f0;">, () => { ... })</span>
+                </div>
+                
+                <!-- Footer info -->
+                <div class="text-center mt-3 pt-3 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Please keep this window open
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pulse-icon {
+        animation: pulse 2s infinite;
+    }
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .spin-icon {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    @@keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+    
+    .step-item {
+        transition: all 0.3s ease;
+    }
+    .step-item.active-step {
+        background: #ecfdf5 !important;
+        border-left: 3px solid #10b981;
+        opacity: 1 !important;
+    }
+    .step-item.completed-step {
+        background: #f0fdf4;
+        border-left: 3px solid #22c55e;
+        opacity: 1 !important;
+    }
+    .step-item.skipped-step {
+        background: #f8fafc;
+        border-left: 3px solid #94a3b8;
+        opacity: 0.7 !important;
+    }
+    
+    .smaller { font-size: 0.75rem; }
+    .bg-success-subtle { background-color: #dcfce7; }
+    .bg-secondary-subtle { background-color: #f1f5f9; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('generateForm');
+        const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+        const elapsedTimeEl = document.getElementById('elapsedTime');
+        const fetchHtmlCheckbox = document.getElementById('FetchHtmlContext');
+        const codePreview = document.getElementById('codePreview');
+        
+        form.addEventListener('submit', function(e) {
+            progressModal.show();
+            document.getElementById('generateBtn').disabled = true;
+            
+            const willFetchHtml = fetchHtmlCheckbox?.checked ?? true;
+            let startTime = Date.now();
+            
+            // Handle no HTML fetch case
+            if (!willFetchHtml) {
+                document.getElementById('step2Title').textContent = 'HTML fetch skipped';
+                document.getElementById('step2Desc').textContent = 'No URL analysis';
+                setTimeout(() => markStepSkipped(2), 500);
+            }
+            
+            function markStepComplete(stepNum) {
+                const step = document.getElementById('step' + stepNum);
+                step.classList.remove('opacity-50', 'active-step');
+                step.classList.add('completed-step');
+                document.getElementById('step' + stepNum + 'Icon').className = 'bi bi-check-circle-fill text-success';
+                document.getElementById('step' + stepNum + 'Badge').className = 'badge bg-success-subtle text-success';
+                document.getElementById('step' + stepNum + 'Badge').textContent = 'Done';
+            }
+            
+            function markStepActive(stepNum) {
+                const step = document.getElementById('step' + stepNum);
+                step.classList.remove('opacity-50');
+                step.classList.add('active-step');
+                document.getElementById('step' + stepNum + 'Icon').className = 'bi bi-arrow-repeat text-primary spin-icon';
+                document.getElementById('step' + stepNum + 'Badge').className = 'badge bg-primary';
+                document.getElementById('step' + stepNum + 'Badge').textContent = 'Working';
+                if (document.getElementById('step' + stepNum + 'Desc')) {
+                    document.getElementById('step' + stepNum + 'Desc').textContent = 'Processing...';
+                }
+            }
+            
+            function markStepSkipped(stepNum) {
+                const step = document.getElementById('step' + stepNum);
+                step.classList.remove('opacity-50', 'active-step');
+                step.classList.add('skipped-step');
+                document.getElementById('step' + stepNum + 'Icon').className = 'bi bi-dash-circle text-muted';
+                document.getElementById('step' + stepNum + 'Badge').className = 'badge bg-secondary-subtle text-secondary';
+                document.getElementById('step' + stepNum + 'Badge').textContent = 'Skipped';
+            }
+            
+            // Timer and state machine
+            setInterval(function() {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elapsedTimeEl.textContent = mins + ':' + secs;
+                
+                // State transitions based on time
+                if (willFetchHtml && elapsed === 5) {
+                    markStepComplete(2);
+                    markStepActive(3);
+                } else if (!willFetchHtml && elapsed === 2) {
+                    markStepActive(3);
+                }
+                
+                if (elapsed === 25) {
+                    markStepComplete(3);
+                    markStepActive(4);
+                }
+            }, 1000);
+            
+            // Code preview animation
+            const snippets = ["'User Login'", "'should submit form'", "'validates input'"];
+            let idx = 0;
+            setInterval(() => {
+                idx = (idx + 1) % snippets.length;
+                codePreview.textContent = snippets[idx];
+            }, 2000);
+        });
+    });
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

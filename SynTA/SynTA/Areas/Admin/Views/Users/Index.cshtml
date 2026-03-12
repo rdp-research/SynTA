@@ -1,0 +1,129 @@
+@model IEnumerable<UserViewModel>
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="bi bi-people me-2"></i>Manage Users</h1>
+        <p class="page-subtitle mb-0">View and manage all users in the system</p>
+    </div>
+    <div class="page-actions">
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-people"></i>
+        </div>
+        <h3>No Users Found</h3>
+        <p>The system has no registered users yet.</p>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Role</th>
+                            <th class="text-center">Projects</th>
+                            <th class="text-center">Stories</th>
+                            <th class="text-center">Tests</th>
+                            <th class="text-center">Last Activity</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@user.Id" class="fw-semibold text-decoration-none">
+                                        @user.Email
+                                    </a>
+                                    @if (!user.EmailConfirmed)
+                                    {
+                                        <br />
+                                        <small class="text-warning">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Unconfirmed
+                                        </small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                                    {
+                                        <span class="badge bg-danger">Locked</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (user.IsAdmin)
+                                    {
+                                        <span class="badge bg-primary">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">User</span>
+                                    }
+                                </td>
+                                <td class="text-center">@user.ProjectCount</td>
+                                <td class="text-center">@user.UserStoryCount</td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">@(user.GherkinScenarioCount + user.CypressScriptCount)</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (user.LastActivity.HasValue)
+                                    {
+                                        <span class="text-muted small">@user.LastActivity.Value.ToString("MMM dd, yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Never</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="Details" asp-route-id="@user.Id" 
+                                       class="btn btn-sm btn-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <span class="text-muted">Total Users: <strong>@Model.Count()</strong></span>
+        </div>
+    </div>
+}

@@ -1,0 +1,282 @@
+@model GherkinGenerateViewModel
+@{
+    ViewData["Title"] = "Generate Gherkin Scenarios";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="UserStory" asp-action="Details" asp-route-id="@Model.UserStoryId">@Model.UserStoryTitle</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Generate Gherkin</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-stars me-2"></i>Generate Gherkin Scenarios</h1>
+                <p class="page-subtitle mb-0">AI-powered test scenario generation</p>
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-text me-2 text-primary"></i>User Story Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <small class="text-muted text-uppercase fw-semibold">Project</small>
+                    </div>
+                    <div class="col-sm-9">@Model.ProjectName</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <small class="text-muted text-uppercase fw-semibold">Title</small>
+                    </div>
+                    <div class="col-sm-9 fw-semibold">@Model.UserStoryTitle</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <small class="text-muted text-uppercase fw-semibold">User Story</small>
+                    </div>
+                    <div class="col-sm-9" style="white-space: pre-wrap;">@Model.UserStoryText</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.UserStoryDescription))
+                {
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <small class="text-muted text-uppercase fw-semibold">Description</small>
+                        </div>
+                        <div class="col-sm-9" style="white-space: pre-wrap;">@Model.UserStoryDescription</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.AcceptanceCriteria))
+                {
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <small class="text-muted text-uppercase fw-semibold">Acceptance Criteria</small>
+                        </div>
+                        <div class="col-sm-9" style="white-space: pre-wrap;">@Model.AcceptanceCriteria</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>How It Works</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <span class="badge bg-primary rounded-circle me-3" style="width: 28px; height: 28px; line-height: 20px;">1</span>
+                            <p class="mb-0 small">AI analyzes your user story and generates comprehensive Gherkin test scenarios</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <span class="badge bg-primary rounded-circle me-3" style="width: 28px; height: 28px; line-height: 20px;">2</span>
+                            <p class="mb-0 small">Considers description and acceptance criteria to create multiple test cases</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <span class="badge bg-primary rounded-circle me-3" style="width: 28px; height: 28px; line-height: 20px;">3</span>
+                            <p class="mb-0 small">Covers happy paths, edge cases, and potential error conditions</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <span class="badge bg-primary rounded-circle me-3" style="width: 28px; height: 28px; line-height: 20px;">4</span>
+                            <p class="mb-0 small">Review and edit the scenarios before approval</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-4" role="alert">
+                    <i class="bi bi-clock me-2"></i>
+                    <strong>Note:</strong> Generation typically takes 10-30 seconds depending on complexity.
+                </div>
+
+                <form asp-action="Generate" method="post" id="generateForm">
+                    <input type="hidden" name="userStoryId" value="@Model.UserStoryId" />
+                    <input type="hidden" name="confirm" value="true" />
+
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a asp-area="User" asp-controller="UserStory" asp-action="Details" asp-route-id="@Model.UserStoryId" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg" id="generateBtn">
+                            <i class="bi bi-stars me-1"></i> Generate Gherkin Scenarios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                <div class="w-100 text-center text-white py-3">
+                    <div class="mb-2">
+                        <i class="bi bi-braces-asterisk fs-2 pulse-icon"></i>
+                    </div>
+                    <h5 class="modal-title mb-1" id="progressModalLabel">Generating Gherkin Scenarios</h5>
+                    <small class="opacity-75">AI is analyzing your user story</small>
+                </div>
+            </div>
+            
+            <div class="modal-body p-4">
+                <!-- Timer -->
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center gap-3 px-4 py-2 rounded-pill" style="background: #f1f5f9;">
+                        <i class="bi bi-clock text-primary"></i>
+                        <span class="font-monospace fs-5 fw-bold text-primary" id="elapsedTime">00:00</span>
+                        <span class="text-muted small">/ ~20s typical</span>
+                    </div>
+                </div>
+                
+                <!-- Pipeline Steps -->
+                <div class="pipeline-steps">
+                    <div class="step-item d-flex align-items-center mb-3 p-2 rounded" id="step1">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">Settings loaded</div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success">Done</span>
+                    </div>
+                    
+                    <div class="step-item d-flex align-items-center mb-3 p-2 rounded active-step" id="step2">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-arrow-repeat text-primary spin-icon"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">AI generating scenarios</div>
+                            <div class="text-muted smaller" id="aiStatus">Processing your requirements...</div>
+                        </div>
+                        <span class="badge bg-primary">Working</span>
+                    </div>
+                    
+                    <div class="step-item d-flex align-items-center p-2 rounded opacity-50" id="step3">
+                        <div class="step-icon-wrapper me-3">
+                            <i class="bi bi-circle text-muted"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium small">Save to database</div>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-secondary">Waiting</span>
+                    </div>
+                </div>
+                
+                <!-- Footer info -->
+                <div class="text-center mt-4 pt-3 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Please keep this window open
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pulse-icon {
+        animation: pulse 2s infinite;
+    }
+    
+    .spin-icon {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    @@keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+    
+    .step-item {
+        transition: all 0.3s ease;
+    }
+    .step-item.active-step {
+        background: #eff6ff;
+        border-left: 3px solid #6366f1;
+    }
+    .step-item.completed-step {
+        background: #f0fdf4;
+        border-left: 3px solid #22c55e;
+    }
+    
+    .smaller { font-size: 0.75rem; }
+    
+    .bg-success-subtle { background-color: #dcfce7; }
+    .bg-secondary-subtle { background-color: #f1f5f9; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('generateForm');
+        const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+        const elapsedTimeEl = document.getElementById('elapsedTime');
+        const aiStatusEl = document.getElementById('aiStatus');
+        
+        const statusMessages = [
+            'Processing your requirements...',
+            'Analyzing acceptance criteria...',
+            'Identifying test scenarios...',
+            'Writing Given-When-Then steps...',
+            'Structuring feature definitions...',
+            'Finalizing scenarios...'
+        ];
+        
+        form.addEventListener('submit', function(e) {
+            progressModal.show();
+            document.getElementById('generateBtn').disabled = true;
+            
+            let startTime = Date.now();
+            let msgIndex = 0;
+            
+            // Timer
+            setInterval(function() {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = (elapsed % 60).toString().padStart(2, '0');
+                elapsedTimeEl.textContent = mins + ':' + secs;
+            }, 1000);
+            
+            // Status rotation
+            setInterval(function() {
+                msgIndex = (msgIndex + 1) % statusMessages.length;
+                aiStatusEl.textContent = statusMessages[msgIndex];
+            }, 3000);
+        });
+    });
+</script>

@@ -1,0 +1,107 @@
+@model UserStoryDetailViewModel
+@{
+    ViewData["Title"] = "Delete User Story";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="Project" asp-action="Index">
+                <i class="bi bi-folder2-open me-1"></i>My Projects
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-area="User" asp-controller="UserStory" asp-action="Index" asp-route-projectId="@Model.ProjectId">@Model.ProjectName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Delete</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" style="color: var(--accent-rose);"><i class="bi bi-trash me-2"></i>Delete User Story</h1>
+                <p class="page-subtitle mb-0">This action cannot be undone</p>
+            </div>
+        </div>
+        
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Warning!</h5>
+            <p class="mb-0">Are you sure you want to delete this user story permanently?</p>
+            @if (Model.GherkinScenarioCount > 0 || Model.CypressScriptCount > 0)
+            {
+                <hr>
+                <p class="mb-0">
+                    <strong>This will also delete:</strong>
+                </p>
+                <ul class="mb-0 mt-2">
+                    @if (Model.GherkinScenarioCount > 0)
+                    {
+                        <li><strong>@Model.GherkinScenarioCount</strong> Gherkin @(Model.GherkinScenarioCount == 1 ? "scenario" : "scenarios")</li>
+                    }
+                    @if (Model.CypressScriptCount > 0)
+                    {
+                        <li><strong>@Model.CypressScriptCount</strong> Cypress @(Model.CypressScriptCount == 1 ? "script" : "scripts")</li>
+                    }
+                </ul>
+            }
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>User Story Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <small class="text-muted text-uppercase fw-semibold">Title</small>
+                    </div>
+                    <div class="col-sm-8 fw-semibold">@Model.Title</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <small class="text-muted text-uppercase fw-semibold">User Story</small>
+                    </div>
+                    <div class="col-sm-8" style="white-space: pre-wrap;">@Model.UserStoryText</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <small class="text-muted text-uppercase fw-semibold">Description</small>
+                        </div>
+                        <div class="col-sm-8" style="white-space: pre-wrap;">@Model.Description</div>
+                    </div>
+                }
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <small class="text-muted text-uppercase fw-semibold">Created</small>
+                    </div>
+                    <div class="col-sm-8">@Model.CreatedAt.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-sm-4">
+                        <small class="text-muted text-uppercase fw-semibold">Test Artifacts</small>
+                    </div>
+                    <div class="col-sm-8">
+                        <span class="badge bg-success me-2">@Model.GherkinScenarioCount Gherkin</span>
+                        <span class="badge bg-info">@Model.CypressScriptCount Cypress</span>
+                    </div>
+                </div>
+                
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-flex justify-content-between pt-3 border-top">
+                        <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Delete User Story
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
