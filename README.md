@@ -4,6 +4,8 @@ This repository contains the SynTA solution and supporting projects for AI-assis
 
 SynTA helps users move from user stories to generated Gherkin scenarios and Cypress tests, with optional real-page context extraction from a target URL.
 
+[Watch the SynTA demo on YouTube](https://youtu.be/ieeBvaNHelU)
+
 ## Repository Layout
 
 - `SynTA/` - solution root (contains `SynTA.slnx`)
